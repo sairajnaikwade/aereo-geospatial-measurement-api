@@ -1,0 +1,42 @@
+services:
+  db:
+    image: postgres:15-alpine
+    container_name: geomeasurement_postgres
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgrespassword
+      POSTGRES_DB: geomeasurement_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d geomeasurement_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: geomeasurement_api
+    restart: always
+    ports:
+      - "8000:8000"
+    environment:
+      - APP_NAME=Geospatial File Measurement API
+      - APP_ENV=production
+      - DEBUG=False
+      - DATABASE_URL=postgresql://postgres:postgrespassword@db:5432/geomeasurement_db
+      - MAX_UPLOAD_SIZE_BYTES=26214400
+      - ALLOWED_EXTENSIONS=.kml,.zip
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - .:/app
+
+volumes:
+  postgres_data:

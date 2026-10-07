@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<kml xmlns="http://www.opengis.net/kml/2.2">
+  <Document>
+    <name>Sample Lines</name>
+    <Placemark>
+      <name>Drone Flight Path 1</name>
+      <description>Linear inspection corridor</description>
+      <LineString>
+        <coordinates>
+          77.5946,12.9716,0
+          77.6046,12.9716,0
+          77.6046,12.9816,0
+        </coordinates>
+      </LineString>
+    </Placemark>
+  </Document>
+</kml>
