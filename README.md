@@ -1,6 +1,6 @@
 # Geospatial File Measurement API
 
-A robust, production-grade backend REST API built with **FastAPI**, **PostgreSQL**, and **GeoPandas** that accepts geospatial files (KML and Shapefile ZIP archives), safely parses and reprojects features to optimal metric coordinate reference systems (UTM), calculates geometric measurements (Polygon area and LineString length), and persists results with full transaction safety.
+A backend REST API built with **FastAPI**, **PostgreSQL**, and **GeoPandas** that accepts geospatial files (KML and Shapefile ZIP archives), parses and reprojects features to optimal metric coordinate reference systems (UTM), calculates geometric measurements (Polygon area and LineString length), and persists results with transaction safety.
 
 Developed as a technical assignment for the **Software Development Engineer (SDE) Intern** position at **AEREO**.
 
@@ -8,20 +8,21 @@ Developed as a technical assignment for the **Software Development Engineer (SDE
 
 ## Table of Contents
 1. [Project Overview](#project-overview)
-2. [Key Features](#key-features)
-3. [Technology Stack](#technology-stack)
-4. [Architecture & Project Structure](#architecture--project-structure)
-5. [File Processing Flow](#file-processing-flow)
-6. [CRS Strategy & Metric Measurements](#crs-strategy--metric-measurements)
-7. [Security & Robustness](#security--robustness)
-8. [API Documentation & Examples](#api-documentation--examples)
-9. [Running Locally](#running-locally)
-10. [Docker & Containerized Setup](#docker--containerized-setup)
-11. [Automated Testing](#automated-testing)
-12. [Sample Data & Verification Script](#sample-data--verification-script)
-13. [Design Decisions & Trade-Offs](#design-decisions--trade-offs)
-14. [Limitations & Future Scope](#limitations--future-scope)
-15. [AEREO Assignment Alignment Matrix](#aereo-assignment-alignment-matrix)
+2. [Verified Demo](#verified-demo)
+3. [Key Features](#key-features)
+4. [Technology Stack](#technology-stack)
+5. [Architecture & Project Structure](#architecture--project-structure)
+6. [File Processing Flow](#file-processing-flow)
+7. [CRS Strategy & Metric Measurements](#crs-strategy--metric-measurements)
+8. [Security & Robustness](#security--robustness)
+9. [API Documentation & Examples](#api-documentation--examples)
+10. [Running Locally](#running-locally)
+11. [Docker & Containerized Setup](#docker--containerized-setup)
+12. [Automated Testing](#automated-testing)
+13. [Sample Data & Verification Script](#sample-data--verification-script)
+14. [Design Decisions & Trade-Offs](#design-decisions--trade-offs)
+15. [Limitations & Future Scope](#limitations--future-scope)
+16. [AEREO Assignment Alignment Matrix](#aereo-assignment-alignment-matrix)
 
 ---
 
@@ -31,7 +32,7 @@ Geospatial data ingested from drone surveys, satellite imagery, and GIS tools co
 1. Ingest **KML** (`.kml`) and **ESRI Shapefile ZIP archives** (`.zip`).
 2. Safely parse and extract feature records, geometries, and attribute properties.
 3. Automatically determine the optimal local **Universal Transverse Mercator (UTM)** projection for geographic datasets (such as standard `EPSG:4326` WGS84).
-4. Perform accurate metric measurements:
+4. Perform metric measurements:
    - **Polygon / MultiPolygon** $\rightarrow$ Area in square meters ($m^2$)
    - **LineString / MultiLineString** $\rightarrow$ Length in meters ($m$)
    - **Point / MultiPoint** $\rightarrow$ No measurement required (`measurement_type: NONE`, `value: null`)
@@ -40,15 +41,31 @@ Geospatial data ingested from drone surveys, satellite imagery, and GIS tools co
 
 ---
 
+## Verified Demo
+
+The included sample KML was tested end-to-end through the API:
+
+| Check | Result |
+| :--- | :--- |
+| **Input** | `sample_polygons.kml` |
+| **Features** | 1 Polygon |
+| **Source CRS** | `EPSG:4326` |
+| **Projected CRS** | `EPSG:32643` (UTM Zone 43N) |
+| **Measurement** | $108,152.5411\text{ m}^2$ |
+| **API Status** | `201 Created` / `200 OK` |
+| **Automated Tests** | 44 / 44 Passed |
+
+---
+
 ## Key Features
 
-- **FastAPI Framework**: High performance, automatic OpenAPI / Swagger documentation, and strict Pydantic v2 data validation.
+- **FastAPI Framework**: Automatic OpenAPI / Swagger documentation and strict Pydantic V2 data validation.
 - **Relational PostgreSQL Persistence**: SQLAlchemy 2.0 ORM with 1-to-many relationship mapping (`files` $\rightarrow$ `features`).
 - **CRS-Aware Measurement Engine**: Avoids invalid degree-based distance/area calculations by reprojecting geographic coordinates to local metric UTM projections.
-- **Strict Security Protections**: Defends against **Zip Slip / Path Traversal** vulnerabilities, restricts file extensions, enforces strict upload size quotas, and inspects file headers/magic bytes.
-- **Zero Disk Residue**: Temporary uploads and extracted shapefile directories are managed using Python context managers (`tempfile.TemporaryDirectory`) ensuring immediate cleanup.
-- **Full Transaction Safety**: Atomic database transactions guarantee zero orphan files or partial feature records if processing or database persistence fails.
-- **100% Automated Test Coverage**: 44 automated pytest unit and integration tests covering security, parsing, reprojection, measurements, and HTTP APIs.
+- **Security Protections**: Defends against **Zip Slip / Path Traversal** vulnerabilities, restricts file extensions, enforces upload size quotas, and inspects file headers/magic bytes.
+- **Temporary Storage Cleanup**: Temporary uploads and extracted shapefile directories are managed using Python context managers (`tempfile.TemporaryDirectory`) ensuring cleanup upon completion or failure.
+- **Transaction Safety**: Atomic database transactions guarantee zero orphan files or partial feature records if processing or persistence fails.
+- **44 Automated Tests — 100% Passing**: Comprehensive pytest test suite covering security, parsing, reprojection, measurements, and HTTP APIs.
 - **Docker Compose Ready**: One-command startup deploying PostgreSQL alongside the FastAPI backend service.
 
 ---
@@ -57,14 +74,14 @@ Geospatial data ingested from drone surveys, satellite imagery, and GIS tools co
 
 | Technology | Purpose | Justification |
 | :--- | :--- | :--- |
-| **Python 3.11+ / 3.13** | Core Language | Industry standard for geospatial data processing and backend development. |
-| **FastAPI** | Web Framework | High throughput, asynchronous/synchronous support, automatic OpenAPI/Swagger docs, and native Pydantic validation. |
-| **PostgreSQL** | Relational Database | Reliable, ACID-compliant database for storing file metadata, features, and JSON attributes. |
+| **Python 3.11+** | Core Language | Standard for geospatial data processing and modern backend services. |
+| **FastAPI** | Web Framework | Modern Python web framework with asynchronous/synchronous support, automatic OpenAPI/Swagger docs, and native Pydantic validation. |
+| **PostgreSQL** | Relational Database | ACID-compliant database for storing file metadata, features, and JSON attributes. |
 | **SQLAlchemy 2.0** | ORM & DB Access | Type-safe declarative database models, relationship cascades, and connection pooling. |
-| **GeoPandas & Fiona** | Geospatial Data Parsing | Standard Python geospatial library for reading Shapefile layers and KML placemarks. |
-| **Shapely 2.0** | Geometric Analysis | High-performance computational geometry for topological validity checks and planar measurements. |
-| **PyProj** | Geodetic Transformations | Cartographic projections and coordinate transformations based on the PROJ engine. |
-| **Pydantic V2** | Schema Validation | Robust serialization, deserialization, and request/response contracts. |
+| **GeoPandas & Fiona** | Geospatial Data Parsing | Standard Python geospatial libraries for reading Shapefile layers and KML placemarks. |
+| **Shapely 2.0** | Geometric Analysis | Computational geometry library for topological validity checks and planar measurements. |
+| **PyProj** | Geodetic Transformations | Cartographic projections and coordinate transformations based on PROJ. |
+| **Pydantic V2** | Schema Validation | Data serialization, deserialization, and request/response contracts. |
 | **Pytest & HTTPX** | Automated Testing | Unit tests and end-to-end integration tests for APIs, security boundaries, and geospatial logic. |
 | **Docker & Compose** | Containerization | Reproducible environments packaging GDAL/PROJ C-libraries and PostgreSQL. |
 
@@ -165,7 +182,7 @@ aereo-geospatial-measurement-api/
 │   ├── generate_samples.py      # Script to rebuild sample files
 │   └── verify_api.py            # End-to-end verification script
 │
-├── Dockerfile                   # Multi-stage image with GDAL/GEOS/PROJ system libraries
+├── Dockerfile                   # Docker container with GDAL/GEOS/PROJ system libraries
 ├── docker-compose.yml           # Multi-container setup (PostgreSQL 15 + FastAPI app)
 ├── requirements.txt             # Project Python dependencies
 ├── pytest.ini                   # Pytest configuration
@@ -228,7 +245,7 @@ Geographic Coordinate Systems (such as standard GPS / WGS84 `EPSG:4326`) represe
 - Directly computing $\text{base} \times \text{height}$ or Euclidean distance on degree coordinates produces meaningless "square degrees" and severe geometric distortion.
 
 ### Dynamic UTM Projection Strategy
-To calculate accurate metric planar measurements without hardcoding regional projections, the service implements a **Dynamic Universal Transverse Mercator (UTM)** selection strategy:
+To calculate metric planar measurements without hardcoding regional projections, the service implements a **Dynamic Universal Transverse Mercator (UTM)** selection strategy:
 
 ```mermaid
 flowchart LR
@@ -272,11 +289,11 @@ flowchart LR
 2. **File Size Quota & Stream Limits**: 
    Upload streams enforce a maximum file size limit (default `25 MB`, configurable via `MAX_UPLOAD_SIZE_BYTES`).
 3. **Content Verification (Non-Trust of Extension Alone)**: 
-   The service inspects binary headers (PKZIP `PK\x03\x04` for ZIPs, XML/KML declarations for KML) to prevent malicious files disguised with valid extensions.
+   The service inspects binary headers (PKZIP `PK\x03\x04` for ZIPs, XML/KML declarations for KML) to prevent invalid files disguised with supported extensions.
 4. **Mandatory Shapefile Component Checks**: 
    ZIP archives are scanned to ensure all 3 essential ESRI Shapefile files (`.shp`, `.shx`, `.dbf`) exist before parsing. Missing components return a clean `400 Bad Request`.
 5. **Safe Temporary Directory Lifecycle**: 
-   All upload staging and decompression take place inside isolated `tempfile.TemporaryDirectory` blocks, ensuring 100% cleanup even if an unexpected exception occurs.
+   All upload staging and decompression take place inside isolated `tempfile.TemporaryDirectory` blocks, ensuring cleanup upon completion or failure.
 6. **Explicit Invalid Geometry Handling**: 
    Geometries are checked for topological validity via `geom.is_valid`. Invalid or self-intersecting geometries are marked `INVALID_GEOMETRY` with `measurement_value: null`—the API **does not silently alter** or mutate the user's coordinates with `make_valid()`.
 7. **Graceful Unsupported Geometry Handling**: 
@@ -404,7 +421,7 @@ curl -X GET "http://localhost:8000/api/files/5422bf62-6307-4180-9e68-a7d66b04c1a
 
 ---
 
-### 4. Health Check (`GET /health`)
+### 4. Health Check (`GET /health` or `GET /api/health`)
 
 #### Example Response (`200 OK`):
 ```json
@@ -422,15 +439,14 @@ curl -X GET "http://localhost:8000/api/files/5422bf62-6307-4180-9e68-a7d66b04c1a
 ## Running Locally
 
 ### Prerequisites
-- Python 3.10+ (tested on Python 3.11 and 3.13)
+- Python 3.11+
 - PostgreSQL (running locally on port `5432` or via Docker)
-- GDAL/GEOS/PROJ libraries (installed automatically with Python wheels on Windows/Linux)
 
 ### Step-by-Step Setup
 
 #### 1. Clone the Repository
 ```bash
-git clone https://github.com/<your-username>/aereo-geospatial-measurement-api.git
+git clone https://github.com/sairajnaikwade/aereo-geospatial-measurement-api.git
 cd aereo-geospatial-measurement-api
 ```
 
@@ -460,7 +476,7 @@ copy .env.example .env
 ```
 Ensure `DATABASE_URL` matches your local PostgreSQL configuration:
 ```env
-DATABASE_URL=postgresql://postgres:postgres@localhost:5432/geomeasurement_db
+DATABASE_URL=postgresql+psycopg2://postgres:postgres@localhost:5432/geomeasurement_db
 ```
 
 #### 5. Create PostgreSQL Database
@@ -487,7 +503,7 @@ docker compose up --build
 
 This will:
 1. Spin up `postgres:15-alpine` container on port `5432` with healthcheck.
-2. Build the FastAPI image with system GDAL/PROJ dependencies.
+2. Build the FastAPI container packaging GDAL/PROJ system dependencies.
 3. Automatically connect the app to PostgreSQL once the database is healthy.
 4. Expose the API on `http://localhost:8000`.
 
@@ -527,6 +543,8 @@ The repository includes deterministic sample files in `sample_data/`:
 - `sample_data/sample_polygons.kml`: Valid KML with Polygon placemark.
 - `sample_data/sample_lines.kml`: Valid KML with LineString placemark.
 - `sample_data/sample_shapefile.zip`: Valid ESRI Shapefile archive with `.shp`, `.shx`, `.dbf`, and `.prj`.
+- `sample_data/generate_samples.py`: Helper script to generate sample shapefile archives.
+- `sample_data/verify_api.py`: End-to-end verification script.
 
 ### Run the End-to-End Verification Script
 ```bash
@@ -539,11 +557,11 @@ This script uploads the sample KML and Shapefile ZIP files and queries their mea
 ## Design Decisions & Trade-Offs
 
 1. **FastAPI over Django / Flask**:
-   - Chosen for modern async/sync support, native Pydantic V2 type validation, and automatic OpenAPI schema generation.
+   - Chosen for native async/sync route support, Pydantic V2 type validation, and automatic OpenAPI schema generation.
 2. **PostgreSQL Relational Schema (without PostGIS dependency)**:
-   - For an intern assignment, standard PostgreSQL with `JSONB` for GeoJSON geometries is simpler, easier to run locally, and avoids requiring custom PostGIS extensions on the host machine. Geometric calculations are performed via Shapely and PyProj in Python.
+   - Standard PostgreSQL with `JSONB` for GeoJSON geometries is simple, reliable, and avoids requiring custom PostGIS extensions on the host machine. Geometric calculations are performed via Shapely and PyProj in Python.
 3. **Synchronous Request Processing over Celery / Background Workers**:
-   - In accordance with engineering principles, keeping file processing synchronous avoids unnecessary complexity (Redis/Celery infrastructure). Files are validated and processed in-memory/temp storage immediately.
+   - In accordance with engineering principles, keeping file processing synchronous avoids unnecessary operational complexity (e.g. Redis/Celery infrastructure) for typical survey files.
 4. **Temporary Directory Sandboxing (`tempfile.TemporaryDirectory`)**:
    - Eliminates persistent local file storage. Files are parsed into database entities and the host disk is cleaned up immediately.
 5. **No Blind `make_valid()` Mutation**:
@@ -553,11 +571,11 @@ This script uploads the sample KML and Shapefile ZIP files and queries their mea
 
 ## Limitations & Future Scope
 
-While the API satisfies all assignment requirements, production systems could incorporate:
+While the API satisfies all assignment requirements, production extensions could incorporate:
 - **Asynchronous Task Queue (Celery / ARQ)**: For processing large multi-gigabyte point clouds or shapefiles asynchronously with job status polling.
-- **Object Storage Integration (AWS S3 / MinIO)**: For archival of original raw survey uploads.
+- **Object Storage Integration (AWS S3 / MinIO)**: For persistent raw file archiving.
 - **PostGIS Spatial Indexing**: For server-side spatial queries (e.g. bounding box intersection, spatial join).
-- **Pagination**: For files containing tens of thousands of individual feature records.
+- **Pagination**: For files containing large numbers of individual feature records.
 - **Authentication & Authorization**: JWT or API-Key based access control.
 
 ---
@@ -579,4 +597,4 @@ While the API satisfies all assignment requirements, production systems could in
 | **Security** | Extension check, max file size, content verification, Zip Slip protection | Completed |
 | **Database** | PostgreSQL with `files` and `features` tables and rollback safety | Completed |
 | **Docker** | Dockerfile with GDAL/PROJ dependencies + `docker-compose.yml` | Completed |
-| **Testing** | 44 automated pytest unit, integration, and security tests | Completed |
+| **Testing** | 44 automated pytest unit, integration, and security tests (100% passing) | Completed |
