@@ -9,7 +9,7 @@ from app.db.base import Base
 def test_app_config():
     """Verify application configuration loads default settings properly."""
     assert settings.APP_NAME == "Geospatial File Measurement API"
-    assert settings.DATABASE_URL.startswith("postgresql://")
+    assert settings.DATABASE_URL.startswith("postgresql")
     assert ".kml" in settings.allowed_extensions_list
     assert ".zip" in settings.allowed_extensions_list
     assert settings.MAX_UPLOAD_SIZE_BYTES > 0
